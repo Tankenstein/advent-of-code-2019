@@ -18,9 +18,8 @@ if [ "$input_file" == "" ]; then
     exit 1
 fi
 
-IFS=',' read -r -a input <<< $(cat $input_file)
+IFS=',' read -r -a tape <<< $(cat $input_file)
 
-tape=($input)
 inputs=(1)
 
 function run_intmachine() {
@@ -31,9 +30,6 @@ function run_intmachine() {
         local tape_value=${tape[$index]}
         local operation=$(($tape_value%100))
         local parameter_modes=$(($tape_value/100))
-        # uncomment for debugging:
-        # echo "${tape[@]}"
-        # echo "$index $operation $parameter_modes"
 
         case "$operation"
         in
