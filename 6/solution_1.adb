@@ -6,7 +6,7 @@ with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Containers.Indefinite_Hashed_Maps;
 
-procedure Main is
+procedure Solution_1 is
    package IO renames Ada.Text_IO;
    package Strings renames Ada.Strings;
 
@@ -37,7 +37,7 @@ procedure Main is
       return Orbits;
    end Parse_Orbits_From_File;
 
-   function Number_Of_Steps (Orbits: Orbits_Maps.Map; Source: String; Target: String) return Integer is
+   function Path_Length (Orbits: Orbits_Maps.Map; Source: String; Target: String) return Integer is
       package SU renames Ada.Strings.Unbounded;
       Steps : Integer := 1;
       Current_Node : SU.Unbounded_String := SU.To_Unbounded_String (Source);
@@ -47,7 +47,7 @@ procedure Main is
          Current_Node := SU.To_Unbounded_String (Orbits.Element (SU.To_String (Current_Node)));
       end Loop;
       return Steps;
-   end Number_Of_Steps;
+   end Path_Length;
 
    function Count_Orbits (Orbits: Orbits_Maps.Map) return Integer is
       Orbit_Count : Integer := 0;
@@ -56,7 +56,7 @@ procedure Main is
       while Orbits_Maps.Has_Element (Orbiter_Cursor) Loop
          declare
             Current_Orbiter : String := Orbits_Maps.Element (Orbiter_Cursor);
-            Orbits_From_Center : Integer := Number_Of_Steps
+            Orbits_From_Center : Integer := Path_Length
                (Orbits => Orbits,
                 Source => Current_Orbiter,
                 Target => Center_Of_Mass);
@@ -67,8 +67,6 @@ procedure Main is
       end Loop;
       return Orbit_Count;
    end Count_Orbits;
-
-   Input_File_Name : aliased constant String := "simple";
 begin
    declare
       Orbits: Orbits_Maps.Map := Parse_Orbits_From_File (Ada.Command_Line.Argument (1));
@@ -76,5 +74,5 @@ begin
    begin
       IO.Put_Line (Integer'Image (Orbit_Count));
    end;
-end Main;
+end Solution_1;
 
