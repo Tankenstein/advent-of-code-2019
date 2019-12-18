@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 input_file="$1"
 
-set -u
+set -ue
 # program codes
 ADD=1
 MULTIPLY=2
