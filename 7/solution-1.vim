@@ -1,3 +1,50 @@
+function! FindHighestResult(firmwareFile) abort
+  let l:firmware = map(split(readfile(a:firmwareFile)[0], ","), "str2nr(v:val)")
+  let l:bestResult = 0
+
+  for l:phaseSettings in s:permutations([0, 1, 2, 3, 4])
+    let l:result = s:runAmplifiers(l:phaseSettings, l:firmware)
+    if l:result > l:bestResult
+      let l:bestResult = l:result
+    endif
+  endfor
+
+  echo l:bestResult
+endfunction
+
+function! s:runAmplifiers(phaseSettings, firmware) abort
+  let l:currentOutput = 0
+  for l:setting in a:phaseSettings
+    let l:currentOutput = s:runIntCode(a:firmware, [l:setting, l:currentOutput])[0]
+  endfor
+  return l:currentOutput
+endfunction
+
+function! s:permutations(list) abort
+  if len(a:list) == 0
+    return []
+  elseif len(a:list) == 1
+    return [a:list]
+  endif
+
+  let l:permutations = []
+  let l:index = 0
+  while l:index < len(a:list)
+    let l:element = a:list[l:index]
+    let l:rest = filter(copy(a:list), "v:val != l:element")
+
+    for l:permutation in s:permutations(l:rest)
+      let l:permutations = add(l:permutations, [l:element] + l:permutation)
+    endfor
+
+    let l:index += 1
+  endwhile
+
+  return l:permutations
+endfunction
+
+" Int machine code starts here -----------------------
+
 " Configuration
 let s:TAPE_SIZE = 1000
 
@@ -16,16 +63,10 @@ let s:HALT = 99
 let s:POSITION = 0
 let s:IMMEDIATE = 1
 
-function! RunIntCodeFile(fileName, inputs) abort
-  let l:rawInput = readfile(a:fileName)[0]
-  let l:input = split(l:rawInput, ",")
-  let l:numbers = map(l:input, "str2nr(v:val)")
-  call s:runIntCode(l:numbers, a:inputs)
-endfunction
-
 function! s:runIntCode(tape, inputs) abort
   let l:tape = s:createTape(a:tape, s:TAPE_SIZE)
   let l:inputs = copy(a:inputs)
+  let l:outputs = []
   let l:index = 0
   let l:inputIndex = 0
 
@@ -51,7 +92,7 @@ function! s:runIntCode(tape, inputs) abort
       let l:index += 2
     elseif l:operation == s:OUTPUT
       let l:firstArgument = s:readArgument(l:tape, l:index, 1)
-      echo l:firstArgument
+      let l:outputs = add(l:outputs, l:firstArgument)
       let l:index += 2
     elseif l:operation == s:JUMP_IF_TRUE
       let l:firstArgument = s:readArgument(l:tape, l:index, 1)
@@ -90,7 +131,7 @@ function! s:runIntCode(tape, inputs) abort
       endif
       let l:index += 4
     elseif l:operation == s:HALT
-      return
+      return l:outputs
     else
       throw "ERR: Unknown operation " . l:operation . " used"
     endif
@@ -105,6 +146,13 @@ function! s:createTape(tape, size) abort
     let l:index += 1
   endwhile
   return l:tape
+endfunction
+
+function! s:pow(number, power) abort
+  if a:power == 0
+    return 1
+  endif
+  return a:number * s:pow(a:number, a:power - 1)
 endfunction
 
 function! s:readArgument(tape, index, offset) abort
@@ -125,9 +173,3 @@ function! s:readPointer(tape, index, offset) abort
   return a:tape[a:index + a:offset]
 endfunction
 
-function! s:pow(number, power) abort
-  if a:power == 0
-    return 1
-  endif
-  return a:number * s:pow(a:number, a:power - 1)
-endfunction
